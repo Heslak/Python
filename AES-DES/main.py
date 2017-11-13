@@ -1,6 +1,8 @@
 #!/usr/bin/python
 # coding: utf8
 
+import numpy as np
+
 s_box=[ ["63","7c","77","7b","f2","6b","6f","c5","30","01","67","2b","fe","d7","ab","76"],
         ["ca","82","c9","7d","fa","59","47","f0","ad","d4","a2","af","9c","a4","72","c0"],
         ["b7","fd","93","26","36","3f","f7","cc","34","a5","e5","f1","71","d8","31","15"],
@@ -16,7 +18,44 @@ s_box=[ ["63","7c","77","7b","f2","6b","6f","c5","30","01","67","2b","fe","d7","
         ["ba","78","25","2e","1c","a6","b4","c6","e8","dd","74","1f","4b","bd","8b","8a"],
         ["70","3e","b5","66","48","03","f6","0e","61","35","57","b9","86","c1","1d","9e"],
         ["e1","f8","98","11","69","d9","8e","94","9b","1e","87","e9","ce","55","28","df"],
-        ["8c","a1","89","0d","bf","e6","42","68","41","99","2d","0f","b0","54","bb","16"] ]
+        ["8c","a1","89","0d","bf","e6","42","68","41","99","2d","0f","b0","54","bb","16"]]
+
+r_con=[ ["01","02","04","08","10","20","40","80","1B","36"],
+        ["00","00","00","00","00","00","00","00","00","00"],
+        ["00","00","00","00","00","00","00","00","00","00"],
+        ["00","00","00","00","00","00","00","00","00","00"] ]
+
+
+def rot_word(Key):
+    
+    for w in range(10):
+        #print (np.array(Key,order='C'))
+        for x in range(len(Key)):
+            if(x<=len(Key)-2):
+                Aux=hex(int(sub_byte(Key[x+1][len(Key[x])-1][0],Key[x+1][len(Key[x])-1][1]),16)^int(Key[x][len(Key[x])-4],16)^int(r_con[x][w],16))[2:]
+                if(len(Aux)==1):
+                    Aux="0"+Aux
+                Key[x].append(Aux)
+                #Key[x].append(hex(int(sub_byte(Key[x+1][len(Key[x])-1][0],Key[x+1][len(Key[x])-1][1]),16)^int(Key[x][len(Key[x])-4],16)^int(r_con[x][0],16))[2:])
+            else: 
+                #Key[x].append(hex(int(sub_byte(Key[0][len(Key[x])-1][0],Key[0][len(Key[x])-1][1]),16)^int(Key[x][len(Key[x])-4],16)^int(r_con[x][0],16))[2:])
+                Aux=hex(int(sub_byte(Key[0][len(Key[x])-1][0],Key[0][len(Key[x])-1][1]),16)^int(Key[x][len(Key[x])-4],16)^int(r_con[x][w],16))[2:]
+                if(len(Aux)==1):
+                    Aux="0"+Aux
+                Key[x].append(Aux)
+            for y in range(3):
+                #Key[x].append(hex(int(Key[x][len(Key[x])-1],16)^int(Key[x][len(Key[x])-4],16))[2:])
+                Aux=hex(int(Key[x][len(Key[x])-1],16)^int(Key[x][len(Key[x])-4],16))[2:]
+                if(len(Aux)==1):
+                    Aux="0"+Aux
+                Key[x].append(Aux)
+
+    #print(Key) 
+    print (np.array(Key,order='C'))
+
+def sub_byte(X,Y):
+    return s_box[int(X,16)][int(Y,16)] 
+
 def xor_matrices(A,B):
     
     if(len(A)!=len(B)):
@@ -27,7 +66,6 @@ def xor_matrices(A,B):
         for col in range(len(A[reng])):
             print(hex(int(A[reng][col],16)^int(B[reng][col],16)).split('x')[-1]+" ",end='')
         print()
-    
    
 
 
@@ -35,12 +73,19 @@ def xor_matrices(A,B):
 def  main():
     print ("Programa AES/DES")
 
-    A=[["32","88","31","e0"],["43","5a","31","37"],["f6","30","98","07"],["a8","8d","a2","34"]]
-    B=[["2b","28","ab","09"],["7e","ae","f7","cf"],["15","d2","15","4f"],["16","a6","88","36"]]
-    #xor_matrices(A,B)
+    A=[ ["32","88","31","e0"],
+        ["43","5a","31","37"],
+        ["f6","30","98","07"],
+        ["a8","8d","a2","34"]]
 
+    B=[ ["2b","28","ab","09"],
+        ["7e","ae","f7","cf"],
+        ["15","d2","15","4f"],
+        ["16","a6","88","3c"]]
+    rot_word(B)
 
-    s_box()
+    sub_byte("C","F") 
+
 
 main()
 
