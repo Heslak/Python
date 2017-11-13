@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # coding: utf8
 
+<<<<<<< HEAD
 
 
 
@@ -78,5 +79,10 @@ def  main():
 
     s_box()
 
+=======
+def main():
+	print "Programa AES/DES"
+	print "Soy donovan"
+>>>>>>> 486d7cfaa9b9ec4cfeb696473566b6c79edcef3a
 main()
 
