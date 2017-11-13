@@ -1,10 +1,22 @@
 #!/usr/bin/python
 # coding: utf8
 
-<<<<<<< HEAD
-
-
-
+s_box=[ ["63","7c","77","7b","f2","6b","6f","c5","30","01","67","2b","fe","d7","ab","76"],
+        ["ca","82","c9","7d","fa","59","47","f0","ad","d4","a2","af","9c","a4","72","c0"],
+        ["b7","fd","93","26","36","3f","f7","cc","34","a5","e5","f1","71","d8","31","15"],
+        ["04","c7","23","c3","18","96","05","9a","07","12","80","e2","eb","27","b2","75"],
+        ["09","83","2c","1a","1b","6e","5a","a0","52","3b","d6","b3","29","e3","2f","84"],
+        ["53","d1","00","ed","20","fc","b1","5b","6a","cb","be","39","4a","4c","58","cf"],
+        ["d0","ef","aa","fb","43","4d","33","85","45","f9","02","7f","50","3c","9f","a8"],
+        ["51","a3","40","8f","92","9d","38","f5","bc","b6","da","21","10","ff","f3","d2"],
+        ["cd","0c","13","ec","5f","97","44","17","c4","a7","7e","3d","64","5d","19","73"],
+        ["60","81","4f","dc","22","2a","90","88","46","ee","b8","14","de","5e","0b","db"],
+        ["e0","32","3a","0a","49","06","24","5c","c2","d3","ac","62","91","95","e4","79"],
+        ["e7","c8","37","6d","8d","d5","4e","a9","6c","56","f4","ea","65","7a","ae","08"],
+        ["ba","78","25","2e","1c","a6","b4","c6","e8","dd","74","1f","4b","bd","8b","8a"],
+        ["70","3e","b5","66","48","03","f6","0e","61","35","57","b9","86","c1","1d","9e"],
+        ["e1","f8","98","11","69","d9","8e","94","9b","1e","87","e9","ce","55","28","df"],
+        ["8c","a1","89","0d","bf","e6","42","68","41","99","2d","0f","b0","54","bb","16"] ]
 def xor_matrices(A,B):
     
     if(len(A)!=len(B)):
@@ -16,56 +28,7 @@ def xor_matrices(A,B):
             print(hex(int(A[reng][col],16)^int(B[reng][col],16)).split('x')[-1]+" ",end='')
         print()
     
-def s_box():
-
-    a="03"
-    a=int(a,16)
-    tabla=bin(143)[2:]
-    resultado=''
-    for n in range(8):
-        binario=bin(a&int(tabla,2)).split('b')[-1]
-        for n in range(8-len(binario)):
-            binario="0"+binario
-        for n in range(len(binario)-1):
-            if(n==0):
-                x=int(binario[0],2)
-            x=x^int(binario[n+1],2)
-        tabla=tabla[-1]+tabla[:-1]
-        #print(resultado)
-        resultado+=str(x)
-        print(resultado)
-    resultado=resultado.replace('0','x').replace('1','0').replace('x','1')
-    print(hex(int(resultado,2)^99)[2:])
-
-    binario="45"
-    binario=int(binario,16)
-    binario=bin(binario)[2:]
-    for n in range(8-len(binario)):
-        binario="0"+binario
-    #binario=binario.replace('0','x').replace('1','0').replace('x','1') 
-    x=s=binario
-    for y in range(4):
-        #s=bin(int(s,2)>>7)
-        
-        s=s[1:]+s[0]
-        #print (s)
-        x=bin(int(x,2)^int(s,2))
-
-    #print(hex(int(x,2)^99))
    
-    entrada="01010011"
-    resultado="00000000"
-    for x in range(5):
-        resultado=bin(int(resultado,2)^int(entrada,2))[2:]
-        for n in range(8-len(resultado)): 
-            resultado="0"+resultado
-        entrada=entrada[1:]+entrada[0]
-        #print(entrada)
-
-    #print (resultado)
-
-    print(hex(int(resultado,2)^99)[2:]) 
-    
 
 
 
@@ -79,10 +42,5 @@ def  main():
 
     s_box()
 
-=======
-def main():
-	print "Programa AES/DES"
-	print "Soy donovan"
->>>>>>> 486d7cfaa9b9ec4cfeb696473566b6c79edcef3a
 main()
 
