@@ -2,6 +2,7 @@
 # coding: utf8
 
 import numpy as np
+from copy import deepcopy
 
 s_box=[ ["63","7c","77","7b","f2","6b","6f","c5","30","01","67","2b","fe","d7","ab","76"],
         ["ca","82","c9","7d","fa","59","47","f0","ad","d4","a2","af","9c","a4","72","c0"],
@@ -40,9 +41,9 @@ e_table=[["01","03","05","0f","11","33","55","ff","1a","2e","72","96","a1","f8",
          ["fc","1f","21","63","a5","f4","07","09","1b","2d","77","99","b0","cb","46","ca"],
          ["45","cf","4a","de","79","8b","86","91","a8","e3","3e","42","c6","51","f3","0e"],
          ["12","36","5a","ee","29","7b","8d","8c","8f","8a","85","94","a7","f2","0d","17"],
-         ["39","4b","dd","7c","84","97","a2","fd","1c","24","6c","b4","c7","52","f6","01"]]
+         ["39","4b","dd","7c","84","97","a2","fd","1c","24","6c","b4","c7","52","f6","00"]]
 
-l_table=[["  ","00","19","01","32","02","1a","c6","4b","c7","1b","68","33","ee","df","03"],
+l_table=[["ff","00","19","01","32","02","1a","c6","4b","c7","1b","68","33","ee","df","03"],
          ["64","04","e0","0e","34","8d","81","ef","4c","71","08","c8","f8","69","1c","c1"],
          ["7d","c2","1d","b5","f9","b9","27","6a","4d","e4","a6","72","9a","c9","09","78"],
          ["65","2f","8a","05","21","0f","e1","24","12","f0","82","45","35","93","da","8e"],
@@ -58,6 +59,11 @@ l_table=[["  ","00","19","01","32","02","1a","c6","4b","c7","1b","68","33","ee",
          ["53","39","84","3c","41","a2","6d","47","14","2a","9e","5d","56","f2","d3","ab"],
          ["44","11","92","d9","23","20","2e","89","b4","7c","b8","26","77","99","e3","a5"],
          ["67","4a","ed","de","c5","31","fe","18","0d","63","8c","80","c0","f7","70","07"]]
+
+GF=[["02","03","01","01"],
+    ["01","02","03","01"],
+    ["01","01","02","03"],
+    ["03","01","01","02"],]
 
 #Manejo de claves
 def sub_keys(Key):  
@@ -83,6 +89,12 @@ def sub_keys(Key):
 def sub_byte(X,Y):
     return s_box[int(X,16)][int(Y,16)] 
 
+def sub_byte_l(X,Y):
+    return l_table[int(X,16)][int(Y,16)] 
+
+def sub_byte_e(X,Y):
+    return e_table[int(X,16)][int(Y,16)] 
+
 def shift_rows(X):
     for reng in range(len(X)):
         for col in range(len(X[reng])):
@@ -90,7 +102,6 @@ def shift_rows(X):
     
     for x in range(len(X)):
         X[x]=X[x][x:]+X[x][:x]
-
     return X
 
 
@@ -109,7 +120,32 @@ def xor_matrices(A,B):
     return A
    
 
+def mult_matrices(X):
+    
+    GF_AUX=deepcopy(GF)
 
+    print(GF)
+    for reng in range(len(X)):
+        for col in range(len(X)):
+            GF_AUX[reng][col]=sub_byte_l(GF_AUX[reng][col][0],GF_AUX[reng][col][1])
+            X[reng][col]=sub_byte_l(X[reng][col][0],X[reng][col][1])
+
+    for reng in range(len(X)):
+        for col in range(len(X[reng])):
+            for reng2 in range(len(X[reng])):
+                aux=hex(int(GF_AUX[col][reng2],16)+int(X[reng2][reng],16))[2:]
+                if(len(aux)==1):
+                    aux="0"+aux
+                else:
+                    aux=aux[-2:]
+                aux=sub_byte_e(aux[0],aux[1])
+                if(reng2==0):
+                    temp=aux
+                else:
+                    temp=hex(int(temp,16)^int(aux,16))[2:]
+            #print(temp)
+            #print()
+    print(GF)
 
 def  main():
     print ("Programa AES/DES")
@@ -126,8 +162,9 @@ def  main():
 
     A=shift_rows(xor_matrices(A,B))
 
-    print(np.array(A,order='C'))
-    print(np.array(e_table,order='C'))
+    mult_matrices(A)
+    #print(np.array(A,order='C'))
+    #print(np.array(e_table,order='C'))
     #print (np.array(sub_keys(B),order='C'))
 
 
