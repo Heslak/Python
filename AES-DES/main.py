@@ -21,6 +21,24 @@ s_box=[ ["63","7c","77","7b","f2","6b","6f","c5","30","01","67","2b","fe","d7","
         ["e1","f8","98","11","69","d9","8e","94","9b","1e","87","e9","ce","55","28","df"],
         ["8c","a1","89","0d","bf","e6","42","68","41","99","2d","0f","b0","54","bb","16"]]
 
+s_box_inv=[ ["52","09","6a","d5","30","36","a5","38","bf","40","a3","9e","81","f3","d7","fb"],
+            ["7c","e3","39","82","9b","2f","ff","87","34","8e","43","44","c4","de","e9","cb"],
+            ["54","7b","94","32","a6","c2","23","3d","ee","4c","95","0b","42","fa","c3","4e"],
+            ["08","2e","a1","66","28","d9","24","b2","76","5b","a2","49","6d","8b","d1","25"],
+            ["72","f8","f6","64","86","68","98","16","d4","a4","5c","cc","5d","65","b6","92"],
+            ["6c","70","48","50","fd","ed","b9","da","5e","15","46","57","a7","8d","9d","84"],
+            ["90","d8","ab","00","8c","bc","d3","0a","f7","e4","58","05","b8","b3","45","06"],
+            ["d0","2c","1e","8f","ca","3f","0f","02","c1","af","bd","03","01","13","8a","6b"],
+            ["3a","91","11","41","4f","67","dc","ea","97","f2","cf","ce","f0","b4","e6","73"],
+            ["96","ac","74","22","e7","ad","35","85","e2","f9","37","e8","1c","75","df","6e"],
+            ["47","f1","1a","71","1d","29","c5","89","6f","b7","62","0e","aa","18","be","1b"],
+            ["fc","56","3e","4b","c6","d2","79","20","9a","db","c0","fe","78","cd","5a","f4"],
+            ["1f","dd","a8","33","88","07","c7","31","b1","12","10","59","27","80","ec","5f"],
+            ["60","51","7f","a9","19","b5","4a","0d","2d","e5","7a","9f","93","c9","9c","ef"],
+            ["a0","e0","3b","4d","ae","2a","f5","b0","c8","eb","bb","3c","83","53","99","61"],
+            ["17","2b","04","7e","ba","77","d6","26","e1","69","14","63","55","21","0c","7d"]]
+
+
 r_con=[ ["01","02","04","08","10","20","40","80","1B","36"],
         ["00","00","00","00","00","00","00","00","00","00"],
         ["00","00","00","00","00","00","00","00","00","00"],
@@ -41,9 +59,9 @@ e_table=[["01","03","05","0f","11","33","55","ff","1a","2e","72","96","a1","f8",
          ["fc","1f","21","63","a5","f4","07","09","1b","2d","77","99","b0","cb","46","ca"],
          ["45","cf","4a","de","79","8b","86","91","a8","e3","3e","42","c6","51","f3","0e"],
          ["12","36","5a","ee","29","7b","8d","8c","8f","8a","85","94","a7","f2","0d","17"],
-         ["39","4b","dd","7c","84","97","a2","fd","1c","24","6c","b4","c7","52","f6","00"]]
+         ["39","4b","dd","7c","84","97","a2","fd","1c","24","6c","b4","c7","52","f6","01"]]
 
-l_table=[["ff","00","19","01","32","02","1a","c6","4b","c7","1b","68","33","ee","df","03"],
+l_table=[[" ","00","19","01","32","02","1a","c6","4b","c7","1b","68","33","ee","df","03"],
          ["64","04","e0","0e","34","8d","81","ef","4c","71","08","c8","f8","69","1c","c1"],
          ["7d","c2","1d","b5","f9","b9","27","6a","4d","e4","a6","72","9a","c9","09","78"],
          ["65","2f","8a","05","21","0f","e1","24","12","f0","82","45","35","93","da","8e"],
@@ -96,6 +114,9 @@ def sub_keys(Key):
 def sub_byte(X,Y):
     return s_box[int(X,16)][int(Y,16)] 
 
+def sub_byte_inv(X,Y):
+    return s_box_inv[int(X,16)][int(Y,16)] 
+
 def sub_byte_l(X,Y):
     return l_table[int(X,16)][int(Y,16)] 
 
@@ -111,6 +132,13 @@ def shift_rows(X):
         X[x]=X[x][x:]+X[x][:x]
     return X
 
+def shift_rows_inv(X):
+    for reng in range(len(X)):
+        for col in range(len(X[reng])):
+            X[reng][col]=sub_byte_inv(X[reng][col][0],X[reng][col][1])
+    for x in range(len(X)):
+        X[x]=X[x][-x:]+X[x][:-x]
+    return X
 
 def xor_matrices(Msj,Key):
     
@@ -149,9 +177,13 @@ def mult_matrices(Msj):
                 aux=hex(int(GF_AUX[col][reng2],16)+int(Msj[reng2][reng],16))[2:]
                 if(len(aux)==1):
                     aux="0"+aux
-                else:
-                    aux=aux[-2:]
-                aux=sub_byte_e(aux[0],aux[1])
+                elif(len(aux)==3):
+                    aux=hex(int(aux,16)-255)[2:]
+                    if(len(aux)==1):
+                        aux="0"+aux
+
+                if(Msj[reng2][reng]!=" "):
+                    aux=sub_byte_e(aux[0],aux[1])
                 if(reng2==0):
                     temp=aux
                 else:
@@ -159,7 +191,68 @@ def mult_matrices(Msj):
             if(len(temp)==1):
                 temp='0'+temp
             Temp[col][reng]=temp
+
+    for reng in range(len(Msj)):
+        for col in range(len(Msj)):
+            Msj[reng][col]=sub_byte_e(Msj[reng][col][0],Msj[reng][col][1])
+
     return Temp
+
+
+def mult_matrices_inv(Msj):
+    Temp=deepcopy(Msj) 
+    GF_AUX=deepcopy(GF_inv)
+
+    #Sustituimos los valores de las matrices por los de la tabla L
+    for reng in range(len(Msj)):
+        for col in range(len(Msj)):
+            GF_AUX[reng][col]=sub_byte_l(GF_AUX[reng][col][0],GF_AUX[reng][col][1])
+            Msj[reng][col]=sub_byte_l(Msj[reng][col][0],Msj[reng][col][1])
+    
+    for reng in range(len(Msj)):
+        for col in range(len(Msj[reng])):
+            for reng2 in range(len(Msj[reng])):
+
+                #En el caso de que el espacio se encuentre aux se iguala 00
+                if(Msj[reng2][reng]==" "):
+                    #print("Entramos al espacio")
+                    aux="00"
+                else:    
+                    aux=hex(int(GF_AUX[col][reng2],16)+int(Msj[reng2][reng],16))[2:]
+                
+                #En el caso de que el resultado sea menor a 16 o mayor a 255 se agrega un 0 o se resta 255
+                if(len(aux)==1):
+                    aux="0"+aux
+                elif(len(aux)==3):
+                    aux=hex(int(aux,16)-255)[2:]
+                    if(len(aux)==1):
+                        aux="0"+aux
+
+                #Regresamos de la tabla L a su valor original
+
+                if(Msj[reng2][reng]!=" "):
+                    aux=sub_byte_e(aux[0],aux[1])
+                #Hacemos Xor del resultado de las sumas
+                if(reng2==0):
+                    temp=aux
+                else:
+                    temp=hex(int(temp,16)^int(aux,16))[2:]
+
+            if(len(temp)==1):
+                temp='0'+temp
+            Temp[col][reng]=temp
+
+    for reng in range(len(Msj)):
+        for col in range(len(Msj)):
+            if(Msj[reng][col]==" "):
+                Msj[reng][col]="00"
+            else:
+                Msj[reng][col]=sub_byte_e(Msj[reng][col][0],Msj[reng][col][1])
+
+    return Temp
+
+
+
 
 def  main():
     print ("Programa AES/DES")
@@ -174,19 +267,9 @@ def  main():
         ["15","d2","15","4f"],
         ["16","a6","88","3c"]]
 
-    #sub_keys(Key)
-    
-    #Ronda 1
-    #Msj=xor_matrices(Msj,Key)
-    #Ronda 2 - 10
-    #Msj=mult_matrices(shift_rows(Msj))    
-    #print (np.array(Msj,order='C'))
-    #Msj=xor_matrices(Msj,select_sub_key(Key,2))
-    #print (np.array(Msj,order='C'))
-
-
     sub_keys(Key)
-    print (np.array(Key,order='C'))
+    print("Mensaje Claro:")
+    print(np.array(Msj,order='C'))
     for x in range(11):
         #Ronda 1
         if(x==0):
@@ -196,13 +279,22 @@ def  main():
             Msj=xor_matrices(mult_matrices(shift_rows(Msj)),select_sub_key(Key,x+1))
         #Ronda final
         elif(x==10):
-            print(np.array(select_sub_key(Key,x+1),order='C'))
-    #print (np.array(Msj,order='C'))
+            Msj=xor_matrices(shift_rows(Msj),select_sub_key(Key,x+1)) 
+
+    print("\nMensaje Cifrado:")
+    print(np.array(Msj,order='C'))
 
 
-
-
-
+    for x in range(11)[::-1]:
+        #Ronda 1
+        if(x==10):
+            Msj=shift_rows_inv(xor_matrices(Msj,select_sub_key(Key,x+1)))
+        elif(0<x and x<10):
+            Msj=shift_rows_inv(mult_matrices_inv(xor_matrices(Msj,select_sub_key(Key,x+1))))
+        elif(x==0): 
+            Msj=xor_matrices(Msj,select_sub_key(Key,x+1))
+    print("\nMensaje Claro:")     
+    print(np.array(Msj,order='C'))
 
 
 
