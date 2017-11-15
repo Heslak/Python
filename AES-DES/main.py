@@ -252,7 +252,32 @@ def mult_matrices_inv(Msj):
     return Temp
 
 
+def cifrar(Msj,Key):
+    for x in range(11):
+        #Ronda 1
+        if(x==0):
+            Crypto=xor_matrices(Msj,select_sub_key(Key,x+1))
+        #Ronda 2 - 10
+        elif(0<x and x<10):
+            Crypto=xor_matrices(mult_matrices(shift_rows(Crypto)),select_sub_key(Key,x+1))
+        #Ronda final
+        elif(x==10):
+            Crypto=xor_matrices(shift_rows(Crypto),select_sub_key(Key,x+1))
+    return Crypto
 
+
+def descifrar(Crypto,Key):
+    
+    for x in range(11)[::-1]:
+        #Ronda 1
+        if(x==10):
+            Msj=shift_rows_inv(xor_matrices(Crypto,select_sub_key(Key,x+1)))
+        elif(0<x and x<10):
+            Msj=shift_rows_inv(mult_matrices_inv(xor_matrices(Msj,select_sub_key(Key,x+1))))
+        elif(x==0):
+            Msj=xor_matrices(Msj,select_sub_key(Key,x+1)) 
+
+    return Msj
 
 def  main():
     print ("Programa AES/DES")
@@ -270,29 +295,12 @@ def  main():
     sub_keys(Key)
     print("Mensaje Claro:")
     print(np.array(Msj,order='C'))
-    for x in range(11):
-        #Ronda 1
-        if(x==0):
-            Msj=xor_matrices(Msj,select_sub_key(Key,x+1))
-        #Ronda 2 - 10
-        elif(0<x and x<10):
-            Msj=xor_matrices(mult_matrices(shift_rows(Msj)),select_sub_key(Key,x+1))
-        #Ronda final
-        elif(x==10):
-            Msj=xor_matrices(shift_rows(Msj),select_sub_key(Key,x+1)) 
 
+    Crypto=cifrar(Msj,Key)
     print("\nMensaje Cifrado:")
-    print(np.array(Msj,order='C'))
+    print(np.array(Crypto,order='C'))
 
-
-    for x in range(11)[::-1]:
-        #Ronda 1
-        if(x==10):
-            Msj=shift_rows_inv(xor_matrices(Msj,select_sub_key(Key,x+1)))
-        elif(0<x and x<10):
-            Msj=shift_rows_inv(mult_matrices_inv(xor_matrices(Msj,select_sub_key(Key,x+1))))
-        elif(x==0): 
-            Msj=xor_matrices(Msj,select_sub_key(Key,x+1))
+    Msj=descifrar(Crypto,Key)
     print("\nMensaje Claro:")     
     print(np.array(Msj,order='C'))
 
