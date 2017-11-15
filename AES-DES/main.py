@@ -63,7 +63,12 @@ l_table=[["ff","00","19","01","32","02","1a","c6","4b","c7","1b","68","33","ee",
 GF=[["02","03","01","01"],
     ["01","02","03","01"],
     ["01","01","02","03"],
-    ["03","01","01","02"],]
+    ["03","01","01","02"]]
+
+GF_inv=[["0e","0b","0d","09"],
+        ["09","0e","0b","0d"],
+        ["0d","09","0e","0b"],
+        ["0b","0d","09","0e"]]
 
 #Manejo de claves
 def sub_keys(Key):  
@@ -86,6 +91,8 @@ def sub_keys(Key):
                 Key[x].append(Aux)
     return Key
 
+#Buscar en matrices
+
 def sub_byte(X,Y):
     return s_box[int(X,16)][int(Y,16)] 
 
@@ -105,35 +112,41 @@ def shift_rows(X):
     return X
 
 
-def xor_matrices(A,B):
+def xor_matrices(Msj,Key):
     
-    if(len(A)!=len(B)):
-        print("Erro en el programa")
+    if(len(Msj)!=len(Key)):
+        print("Error en el programa")
         exit(0)
         
-    for reng in range(len(A)):
-        for col in range(len(A[reng])):
-            Aux=hex(int(A[reng][col],16)^int(B[reng][col],16)).split('x')[-1] 
+    for reng in range(len(Msj)):
+        for col in range(len(Msj[reng])):
+            Aux=hex(int(Msj[reng][col],16)^int(Key[reng][col],16)).split('x')[-1] 
             if(len(Aux)==1):
                 Aux="0"+Aux
-            A[reng][col]=Aux 
-    return A
+            Msj[reng][col]=Aux 
+    return Msj
    
+def select_sub_key(Key,X):
+    Sub_Key=[]
+    for y in range(4):
+        Row_Sub_Key=[]
+        for x in range(X*4-4,X*4):
+            Row_Sub_Key.append(Key[y][x])
+        Sub_Key.append(Row_Sub_Key)
+    return Sub_Key
 
-def mult_matrices(X):
-    
+def mult_matrices(Msj):
+    Temp=deepcopy(Msj) 
     GF_AUX=deepcopy(GF)
-
-    print(GF)
-    for reng in range(len(X)):
-        for col in range(len(X)):
+    for reng in range(len(Msj)):
+        for col in range(len(Msj)):
             GF_AUX[reng][col]=sub_byte_l(GF_AUX[reng][col][0],GF_AUX[reng][col][1])
-            X[reng][col]=sub_byte_l(X[reng][col][0],X[reng][col][1])
-
-    for reng in range(len(X)):
-        for col in range(len(X[reng])):
-            for reng2 in range(len(X[reng])):
-                aux=hex(int(GF_AUX[col][reng2],16)+int(X[reng2][reng],16))[2:]
+            Msj[reng][col]=sub_byte_l(Msj[reng][col][0],Msj[reng][col][1])
+    
+    for reng in range(len(Msj)):
+        for col in range(len(Msj[reng])):
+            for reng2 in range(len(Msj[reng])):
+                aux=hex(int(GF_AUX[col][reng2],16)+int(Msj[reng2][reng],16))[2:]
                 if(len(aux)==1):
                     aux="0"+aux
                 else:
@@ -143,29 +156,53 @@ def mult_matrices(X):
                     temp=aux
                 else:
                     temp=hex(int(temp,16)^int(aux,16))[2:]
-            #print(temp)
-            #print()
-    print(GF)
+            if(len(temp)==1):
+                temp='0'+temp
+            Temp[col][reng]=temp
+    return Temp
 
 def  main():
     print ("Programa AES/DES")
 
-    A=[ ["32","88","31","e0"],
+    Msj=[["32","88","31","e0"],
         ["43","5a","31","37"],
         ["f6","30","98","07"],
         ["a8","8d","a2","34"]]
 
-    B=[ ["2b","28","ab","09"],
+    Key=[["2b","28","ab","09"],
         ["7e","ae","f7","cf"],
         ["15","d2","15","4f"],
         ["16","a6","88","3c"]]
 
-    A=shift_rows(xor_matrices(A,B))
+    #sub_keys(Key)
+    
+    #Ronda 1
+    #Msj=xor_matrices(Msj,Key)
+    #Ronda 2 - 10
+    #Msj=mult_matrices(shift_rows(Msj))    
+    #print (np.array(Msj,order='C'))
+    #Msj=xor_matrices(Msj,select_sub_key(Key,2))
+    #print (np.array(Msj,order='C'))
 
-    mult_matrices(A)
-    #print(np.array(A,order='C'))
-    #print(np.array(e_table,order='C'))
-    #print (np.array(sub_keys(B),order='C'))
+
+    sub_keys(Key)
+    print (np.array(Key,order='C'))
+    for x in range(11):
+        #Ronda 1
+        if(x==0):
+            Msj=xor_matrices(Msj,select_sub_key(Key,x+1))
+        #Ronda 2 - 10
+        elif(0<x and x<10):
+            Msj=xor_matrices(mult_matrices(shift_rows(Msj)),select_sub_key(Key,x+1))
+        #Ronda final
+        elif(x==10):
+            print(np.array(select_sub_key(Key,x+1),order='C'))
+    #print (np.array(Msj,order='C'))
+
+
+
+
+
 
 
 
