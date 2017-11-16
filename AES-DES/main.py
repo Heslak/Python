@@ -2,6 +2,7 @@
 # coding: utf8
 
 import numpy as np
+import math
 from copy import deepcopy
 
 s_box=[ ["63","7c","77","7b","f2","6b","6f","c5","30","01","67","2b","fe","d7","ab","76"],
@@ -93,12 +94,12 @@ def sub_keys(Key):
     for w in range(10):
         for x in range(len(Key)):
             if(x<=len(Key)-2):
-                Aux=hex(int(sub_byte(Key[x+1][len(Key[x])-1][0],Key[x+1][len(Key[x])-1][1]),16)^int(Key[x][len(Key[x])-4],16)^int(r_con[x][w],16))[2:]
+                Aux=hex(int(sub_byte(Key[x+1][len(Key[x])-1][0],Key[x+1][len(Key[x])-1][1],True),16)^int(Key[x][len(Key[x])-4],16)^int(r_con[x][w],16))[2:]
                 if(len(Aux)==1):
                     Aux="0"+Aux
                 Key[x].append(Aux)
             else: 
-                Aux=hex(int(sub_byte(Key[0][len(Key[x])-1][0],Key[0][len(Key[x])-1][1]),16)^int(Key[x][len(Key[x])-4],16)^int(r_con[x][w],16))[2:]
+                Aux=hex(int(sub_byte(Key[0][len(Key[x])-1][0],Key[0][len(Key[x])-1][1],True),16)^int(Key[x][len(Key[x])-4],16)^int(r_con[x][w],16))[2:]
                 if(len(Aux)==1):
                     Aux="0"+Aux
                 Key[x].append(Aux)
@@ -109,37 +110,36 @@ def sub_keys(Key):
                 Key[x].append(Aux)
     return Key
 
-#Buscar en matrices
+#Buscamos en matrices los valores ya sea en la s_box o en la s_box_inv
 
-def sub_byte(X,Y):
-    return s_box[int(X,16)][int(Y,16)] 
+def sub_byte(X,Y,inv):
+    if(inv):
+        return s_box[int(X,16)][int(Y,16)] 
+    else:
+        return s_box_inv[int(X,16)][int(Y,16)] 
 
-def sub_byte_inv(X,Y):
-    return s_box_inv[int(X,16)][int(Y,16)] 
-
+#Buscamos los valores en la tabla L
 def sub_byte_l(X,Y):
     return l_table[int(X,16)][int(Y,16)] 
 
+#Buscamos los valores en la tabla E
 def sub_byte_e(X,Y):
     return e_table[int(X,16)][int(Y,16)] 
 
-def shift_rows(X):
+def shift_rows(X,inv):
+    #Cambiamos los valores de la matriz por los de la s_box o la s_box_inv
     for reng in range(len(X)):
         for col in range(len(X[reng])):
-            X[reng][col]=sub_byte(X[reng][col][0],X[reng][col][1])
-    
+            X[reng][col]=sub_byte(X[reng][col][0],X[reng][col][1],inv)
+    #Rotamos la matriz, de izquierda a derecha o de derecha a izquierda 
     for x in range(len(X)):
-        X[x]=X[x][x:]+X[x][:x]
+        if(inv):
+            X[x]=X[x][x:]+X[x][:x]
+        else:
+            X[x]=X[x][-x:]+X[x][:-x]
     return X
 
-def shift_rows_inv(X):
-    for reng in range(len(X)):
-        for col in range(len(X[reng])):
-            X[reng][col]=sub_byte_inv(X[reng][col][0],X[reng][col][1])
-    for x in range(len(X)):
-        X[x]=X[x][-x:]+X[x][:-x]
-    return X
-
+#Hacemos un Xor elemento por elemento de las matrices
 def xor_matrices(Msj,Key):
     
     if(len(Msj)!=len(Key)):
@@ -153,7 +153,8 @@ def xor_matrices(Msj,Key):
                 Aux="0"+Aux
             Msj[reng][col]=Aux 
     return Msj
-   
+  
+#Regresamos la subllave que se encuentra en el arreglo Key
 def select_sub_key(Key,X):
     Sub_Key=[]
     for y in range(4):
@@ -163,85 +164,50 @@ def select_sub_key(Key,X):
         Sub_Key.append(Row_Sub_Key)
     return Sub_Key
 
-def mult_matrices(Msj):
+def mult_matrices(Msj,inv):
     Temp=deepcopy(Msj) 
-    GF_AUX=deepcopy(GF)
+    #Verificamos con que Matriz se va a multiplicar si la normal o la inversa
+    if(inv):  
+        GF_AUX=deepcopy(GF)
+    else:
+        GF_AUX=deepcopy(GF_inv)
+
+    #Hacemos sustitución de elementos con la tabla L
     for reng in range(len(Msj)):
         for col in range(len(Msj)):
             GF_AUX[reng][col]=sub_byte_l(GF_AUX[reng][col][0],GF_AUX[reng][col][1])
             Msj[reng][col]=sub_byte_l(Msj[reng][col][0],Msj[reng][col][1])
     
+    #Multiplicación de Matrices
     for reng in range(len(Msj)):
         for col in range(len(Msj[reng])):
             for reng2 in range(len(Msj[reng])):
-                aux=hex(int(GF_AUX[col][reng2],16)+int(Msj[reng2][reng],16))[2:]
-                if(len(aux)==1):
-                    aux="0"+aux
-                elif(len(aux)==3):
-                    aux=hex(int(aux,16)-255)[2:]
-                    if(len(aux)==1):
-                        aux="0"+aux
-
-                if(Msj[reng2][reng]!=" "):
-                    aux=sub_byte_e(aux[0],aux[1])
-                if(reng2==0):
-                    temp=aux
-                else:
-                    temp=hex(int(temp,16)^int(aux,16))[2:]
-            if(len(temp)==1):
-                temp='0'+temp
-            Temp[col][reng]=temp
-
-    for reng in range(len(Msj)):
-        for col in range(len(Msj)):
-            Msj[reng][col]=sub_byte_e(Msj[reng][col][0],Msj[reng][col][1])
-
-    return Temp
-
-
-def mult_matrices_inv(Msj):
-    Temp=deepcopy(Msj) 
-    GF_AUX=deepcopy(GF_inv)
-
-    #Sustituimos los valores de las matrices por los de la tabla L
-    for reng in range(len(Msj)):
-        for col in range(len(Msj)):
-            GF_AUX[reng][col]=sub_byte_l(GF_AUX[reng][col][0],GF_AUX[reng][col][1])
-            Msj[reng][col]=sub_byte_l(Msj[reng][col][0],Msj[reng][col][1])
-    
-    for reng in range(len(Msj)):
-        for col in range(len(Msj[reng])):
-            for reng2 in range(len(Msj[reng])):
-
-                #En el caso de que el espacio se encuentre aux se iguala 00
+                #Verificamos que el elemento sea un HEX
                 if(Msj[reng2][reng]==" "):
-                    #print("Entramos al espacio")
                     aux="00"
-                else:    
+                else:
                     aux=hex(int(GF_AUX[col][reng2],16)+int(Msj[reng2][reng],16))[2:]
-                
-                #En el caso de que el resultado sea menor a 16 o mayor a 255 se agrega un 0 o se resta 255
+                #Verificamos el tamaño del resultado, en el caso de que de menor a F se agregaun 0 y en el caso de que sea mayor a FF se resta FF
                 if(len(aux)==1):
                     aux="0"+aux
                 elif(len(aux)==3):
                     aux=hex(int(aux,16)-255)[2:]
                     if(len(aux)==1):
                         aux="0"+aux
-
-                #Regresamos de la tabla L a su valor original
-
+                #Regresamos el resultado de la suma a su valor con la tabla E
                 if(Msj[reng2][reng]!=" "):
                     aux=sub_byte_e(aux[0],aux[1])
-                #Hacemos Xor del resultado de las sumas
+                #En caso de que sea el primer elemento se guarda en una variable
                 if(reng2==0):
                     temp=aux
                 else:
                     temp=hex(int(temp,16)^int(aux,16))[2:]
-
+            #En el caso de que el resultado de las XORS de menor que F se agrega un cero
             if(len(temp)==1):
                 temp='0'+temp
             Temp[col][reng]=temp
 
+    #Regresamos los valores de MSJ a su valor original
     for reng in range(len(Msj)):
         for col in range(len(Msj)):
             if(Msj[reng][col]==" "):
@@ -251,7 +217,6 @@ def mult_matrices_inv(Msj):
 
     return Temp
 
-
 def cifrar(Msj,Key):
     for x in range(11):
         #Ronda 1
@@ -259,10 +224,10 @@ def cifrar(Msj,Key):
             Crypto=xor_matrices(Msj,select_sub_key(Key,x+1))
         #Ronda 2 - 10
         elif(0<x and x<10):
-            Crypto=xor_matrices(mult_matrices(shift_rows(Crypto)),select_sub_key(Key,x+1))
-        #Ronda final
+            Crypto=xor_matrices(mult_matrices(shift_rows(Crypto,True),True),select_sub_key(Key,x+1))
+        #Ronda Final
         elif(x==10):
-            Crypto=xor_matrices(shift_rows(Crypto),select_sub_key(Key,x+1))
+            Crypto=xor_matrices(shift_rows(Crypto,True),select_sub_key(Key,x+1))
     return Crypto
 
 
@@ -271,40 +236,63 @@ def descifrar(Crypto,Key):
     for x in range(11)[::-1]:
         #Ronda 1
         if(x==10):
-            Msj=shift_rows_inv(xor_matrices(Crypto,select_sub_key(Key,x+1)))
+            Msj=shift_rows(xor_matrices(Crypto,select_sub_key(Key,x+1)),False)
+        #Ronda 2 - 10
         elif(0<x and x<10):
-            Msj=shift_rows_inv(mult_matrices_inv(xor_matrices(Msj,select_sub_key(Key,x+1))))
+            Msj=shift_rows(mult_matrices(xor_matrices(Msj,select_sub_key(Key,x+1)),False),False)
+        #Ronda Final
         elif(x==0):
             Msj=xor_matrices(Msj,select_sub_key(Key,x+1)) 
-
     return Msj
+
+def pasar_matriz_cadena(Msj):
+    temp=""
+    for reng in range(len(Msj)):
+        for col in range(len(Msj[reng])):
+            temp=temp+chr(int(Msj[reng][col],16))
+
+    return temp
+
+def seleccionador(Cadena,Key,Accion):
+    Cadena_Ret=""
+    Msj=[]
+    Temp=[]  
+    for matrices in range(math.ceil(len(Cadena)/16)):
+        for col in range(4):
+            for reng in range(4):
+                n=(matrices*16)+(col*4)+(reng)
+                if(len(Cadena)>n):
+                    temp=hex(ord(Cadena[n]))[2:]
+                    if(len(temp)==0):
+                        temp="0"+temp
+                    Temp.append(temp)
+                else:
+                    Temp.append("58")
+            Msj.append(Temp)
+            Temp=[]
+        if(Accion=="Cifrar"):
+            Cadena_Ret=Cadena_Ret+pasar_matriz_cadena(cifrar(Msj,Key))
+        elif(Accion=="Descifrar"):
+            Cadena_Ret=Cadena_Ret+pasar_matriz_cadena(descifrar(Msj,Key))
+        Msj=[]
+
+    return Cadena_Ret
 
 def  main():
     print ("Programa AES/DES")
 
-    Msj=[["32","88","31","e0"],
-        ["43","5a","31","37"],
-        ["f6","30","98","07"],
-        ["a8","8d","a2","34"]]
 
     Key=[["2b","28","ab","09"],
         ["7e","ae","f7","cf"],
         ["15","d2","15","4f"],
         ["16","a6","88","3c"]]
 
-    sub_keys(Key)
+    Key=sub_keys(Key)
+    Mensaje="Hola ¿Cómo estás?, Yo muy bien y ¿tú qué tal?"
     print("Mensaje Claro:")
-    print(np.array(Msj,order='C'))
-
-    Crypto=cifrar(Msj,Key)
-    print("\nMensaje Cifrado:")
-    print(np.array(Crypto,order='C'))
-
-    Msj=descifrar(Crypto,Key)
-    print("\nMensaje Claro:")     
-    print(np.array(Msj,order='C'))
-
-
-
+    Crypto=seleccionador(Mensaje,Key,"Cifrar")
+    print(Crypto) 
+    print("Mensaje Cifrado:")
+    print(seleccionador(Crypto,Key,"Descifrar"))
 main()
 
