@@ -1,13 +1,14 @@
 #!/usr/bin/python
-# coding: utf8
 
 import numpy as np
 import math
 from copy import deepcopy
 from tkinter import *
 from tkinter.filedialog import askopenfilename
+from tkinter.messagebox import *
 import PIL.Image
 import PIL.ImageTk
+
 
 s_box=[ ["63","7c","77","7b","f2","6b","6f","c5","30","01","67","2b","fe","d7","ab","76"],
         ["ca","82","c9","7d","fa","59","47","f0","ad","d4","a2","af","9c","a4","72","c0"],
@@ -288,23 +289,22 @@ class Application(Frame):
     
     def abrir(self,event):
         name = askopenfilename(initialdir="./",
-                           filetypes =(("Text File", "*.txt"),("All Files","*.*")),
-                           title = "Choose a file."
+                           filetypes =(("Todos los archivos","*.*"),("Archivo de Texto", "*.txt")),
+                           title = "Escoge un archivo."
                            )
-        archivo = open(name,'r')
-        lines = archivo.read()
+        try:
+            archivo = open(name,'r',encoding='utf-8')
+            self.file.set(name)
+            lines = archivo.read()
 
+            print(len(lines))
+            archivo.close()
+        except (TypeError,FileNotFoundError):
+            lines=""
+            archivo=""
+            self.file.set("")
         self.cadena.set(lines)
-        print(self.cadena.get())
-
-        #Key=[["2b","28","ab","09"],
-        #    ["7e","ae","f7","cf"],
-        #    ["15","d2","15","4f"],
-        #    ["16","a6","88","3c"]]
-        #Key=sub_keys(Key)
-        #Crypto=seleccionador(lines,Key,"Cifrar")
-        #print(Crypto)
-        #print(seleccionador(Crypto,Key,"Descifrar"))
+        #print(self.cadena.get())
 
     def cifrar(self,event):
 
@@ -314,7 +314,20 @@ class Application(Frame):
             ["16","a6","88","3c"]]
         Key=sub_keys(Key)
         Crypto=seleccionador(self.cadena.get(),Key,"Cifrar")
-        print(Crypto)
+        #print(Crypto)
+        if(len(self.file.get())==0):
+            showinfo('Cifrado', 'No ha cargado ningun archivo')
+            self.file.set("")
+            self.cadena.set("")
+        else:
+            archivo = open("./Prueba.py",'w',encoding='utf-8')
+            archivo.write(Crypto)
+            archivo.close()
+            #Msj=seleccionador(Crypto,Key,"Descifrar")
+            #print(Msj)
+            showinfo("Cifrado","Su archivo acaba de ser cifrado")
+            self.file.set("")
+            self.cadena.set("")
         
     def descifrar(self,event):
         
@@ -323,21 +336,36 @@ class Application(Frame):
             ["15","d2","15","4f"],
             ["16","a6","88","3c"]]
         Key=sub_keys(Key)
-        Crypto=seleccionador(self.cadena.get(),Key,"Descifrar")
-        print(Crypto)
+        Msj=seleccionador(self.cadena.get(),Key,"Descifrar")
+        #print(Msj)
+        if(len(self.file.get())==0):
+            showinfo("Descifrado","No ha cargado ningun archivo")
+            self.file.set("")
+            self.cadena.set("")
+        else:
+            #archivo = open(self.file.get(),'w')
+            #archivo.write(Msj)
+            #archivo.close()
+           # print(Msj)
+            print(len(Msj))
+            showinfo("Descifrado","Su archivo acaba de ser descifrado")
+            self.file.set("")
+            self.cadena.set("")
+
 
     def createWidgets(self):
         #Variable para los niveles
         self.cadena=StringVar()
+        self.file=StringVar()
         #Variable para imagen
         self.image=PIL.Image.open("./images/cifrado.jpg")
         self.photo=PIL.ImageTk.PhotoImage(self.image)
         self.imagen=Label(self, image=self.photo)
-        self.imagen.grid(row=0,column=0,columnspan=3,rowspan=1)
+        self.imagen.grid(row=0,column=0,columnspan=2,rowspan=1)
 
         texto="\t\tCriptografía"
         #Creación de caja de texto
-        self.out=Text(self,height=20,width=50)
+        self.out=Text(self,height=21,width=50)
         self.out.tag_configure('big', font=('Verdana', 20, 'bold'))
         self.out.tag_configure('low', font=('Verdana', 10))
         self.out.insert(END,texto,'big')
@@ -348,34 +376,33 @@ class Application(Frame):
                 \n\tLara Alamilla Donovan Adrián
                 \n\tGrupo 2"""
         self.out.insert(END,texto,'low')
-        self.out.grid(row=0,column=3,columnspan=3,rowspan=1)
+        self.out.grid(row=0,column=2,columnspan=4,rowspan=1)
         self.out.config(state="disabled")
 
         #Creación de botón ENTER/SIGUIENTE
-        self.ENTER = Button(self)
-        self.ENTER["text"] = "Open",
-        self.ENTER["fg"]="green"
-        self.ENTER.bind("<Button-1>",self.abrir)
-        self.ENTER.grid(row=1,column=3)
+        self.ABRIR = Button(self)
+        self.ABRIR["text"] = "Abrir",
+        self.ABRIR["fg"]="green"
+        self.ABRIR.bind("<Button-1>",self.abrir)
+        self.ABRIR.grid(row=1,column=2)
         
         #Creacion de botón Cifrar
-
-        self.ENTER = Button(self)
-        self.ENTER["text"] = "Cifrar",
-        self.ENTER["fg"]="Black"
-        self.ENTER.bind("<Button-1>",self.cifrar)
-        self.ENTER.grid(row=1,column=4)
+        self.CIFRAR = Button(self)
+        self.CIFRAR["text"] = "Cifrar",
+        self.CIFRAR["fg"]="Black"
+        self.CIFRAR.bind("<Button-1>",self.cifrar)
+        self.CIFRAR.grid(row=1,column=3)
+        
         #Creacion de botón Descifrar
-
-        self.ENTER = Button(self)
-        self.ENTER["text"] = "Descifrar",
-        self.ENTER["fg"]="Black"
-        self.ENTER.bind("<Button-1>",self.descifrar)
-        self.ENTER.grid(row=1,column=4)
+        self.DESCIFRAR = Button(self)
+        self.DESCIFRAR["text"] = "Descifrar",
+        self.DESCIFRAR["fg"]="Black"
+        self.DESCIFRAR.bind("<Button-1>",self.descifrar)
+        self.DESCIFRAR.grid(row=1,column=4)
 
         #Creación de botón SALIR
         self.QUIT = Button(self)
-        self.QUIT["text"] = "Cifrar"
+        self.QUIT["text"] = "Cerrar"
         self.QUIT["fg"]   = "red"
         self.QUIT["command"] =  self.quit
         self.QUIT.grid(row=1,column=5)
@@ -387,25 +414,6 @@ class Application(Frame):
         self.createWidgets()
 
 def  main():
-    print ("Programa AES/DES\n")
-
-
-    Key=[["2b","28","ab","09"],
-        ["7e","ae","f7","cf"],
-        ["15","d2","15","4f"],
-        ["16","a6","88","3c"]]
-
-    Key=sub_keys(Key)
-    Mensaje="Hola ¿Cómo estás?, Yo muy bien y ¿tú qué tal?"
-   # print("Mensaje Claro:")
-   # print(Mensaje,"\n")
-   # print("Mensaje Cifrado:")
-   # Crypto=seleccionador(Mensaje,Key,"Cifrar")
-   # print(Crypto,"\n") 
-   # print("Mensaje Claro:")
-   # print(seleccionador(Crypto,Key,"Descifrar"))
-
-
     root = Tk()
     root.resizable(width=False, height=False)
     app = Application(master=root)
