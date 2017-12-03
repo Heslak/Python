@@ -250,19 +250,29 @@ def descifrar(Crypto,Key):
             Msj=xor_matrices(Msj,select_sub_key(Key,x+1)) 
     return Msj
 
-def pasar_matriz_cadena(Msj):
+def pasar_matriz_cadena(Msj,Accion):
     temp=""
     for reng in range(len(Msj)):
         for col in range(len(Msj[reng])):
-            temp=temp+chr(int(Msj[reng][col],16))
-
+            if(Accion=="Cifrar"):
+                temp=temp+Msj[reng][col]
+            else:
+                temp=temp+chr(int(Msj[reng][col],16))
     return temp
 
 def seleccionador(Cadena,Key,Accion):
     Agregado=0
     Cadena_Ret=""
     Msj=[]
-    Temp=[]  
+    Temp=[]
+    Hex=""
+    if(Accion=="Descifrar"):
+        Agregado=int(Cadena[0],16)
+        Cadena=Cadena[1:]
+        for n in range(int(len(Cadena)/2)):
+            Hex=Hex+chr(int(Cadena[(n*2)]+Cadena[(n*2)+1],16))
+        Cadena=Hex
+    
     for matrices in range(math.ceil(len(Cadena)/16)):
         for col in range(4):
             for reng in range(4):
@@ -273,15 +283,20 @@ def seleccionador(Cadena,Key,Accion):
                         temp="0"+temp
                     Temp.append(temp)
                 else:
-                    Agregado+=1
+                    Agregado=Agregado+1
                     Temp.append("58")
             Msj.append(Temp)
             Temp=[]
         if(Accion=="Cifrar"):
-            Cadena_Ret=Cadena_Ret+pasar_matriz_cadena(cifrar(Msj,Key))
+            Cadena_Ret=Cadena_Ret+pasar_matriz_cadena(cifrar(Msj,Key),"Cifrar")
         elif(Accion=="Descifrar"):
-            Cadena_Ret=Cadena_Ret+pasar_matriz_cadena(descifrar(Msj,Key))
+            Cadena_Ret=Cadena_Ret+pasar_matriz_cadena(descifrar(Msj,Key),"Descifrar")
         Msj=[]
+    if(Accion=="Cifrar"):
+        Cadena_Ret=hex(Agregado)[2:]+Cadena_Ret
+    else:
+        Cadena_Ret=Cadena_Ret[:-Agregado]
+
     return Cadena_Ret
 
 
@@ -296,15 +311,14 @@ class Application(Frame):
             archivo = open(name,'r',encoding='utf-8')
             self.file.set(name)
             lines = archivo.read()
-
-            print(len(lines))
             archivo.close()
         except (TypeError,FileNotFoundError):
             lines=""
             archivo=""
             self.file.set("")
+        #Con esto obtenemos el contenido en la entrada
+        print(self.contenido.get())
         self.cadena.set(lines)
-        #print(self.cadena.get())
 
     def cifrar(self,event):
 
@@ -314,17 +328,14 @@ class Application(Frame):
             ["16","a6","88","3c"]]
         Key=sub_keys(Key)
         Crypto=seleccionador(self.cadena.get(),Key,"Cifrar")
-        #print(Crypto)
         if(len(self.file.get())==0):
             showinfo('Cifrado', 'No ha cargado ningun archivo')
             self.file.set("")
             self.cadena.set("")
         else:
-            archivo = open("./Prueba.py",'w',encoding='utf-8')
+            archivo = open(self.file.get(),'w')
             archivo.write(Crypto)
             archivo.close()
-            #Msj=seleccionador(Crypto,Key,"Descifrar")
-            #print(Msj)
             showinfo("Cifrado","Su archivo acaba de ser cifrado")
             self.file.set("")
             self.cadena.set("")
@@ -337,17 +348,14 @@ class Application(Frame):
             ["16","a6","88","3c"]]
         Key=sub_keys(Key)
         Msj=seleccionador(self.cadena.get(),Key,"Descifrar")
-        #print(Msj)
         if(len(self.file.get())==0):
             showinfo("Descifrado","No ha cargado ningun archivo")
             self.file.set("")
             self.cadena.set("")
         else:
-            #archivo = open(self.file.get(),'w')
-            #archivo.write(Msj)
-            #archivo.close()
-           # print(Msj)
-            print(len(Msj))
+            archivo = open(self.file.get(),'w')
+            archivo.write(Msj)
+            archivo.close()
             showinfo("Descifrado","Su archivo acaba de ser descifrado")
             self.file.set("")
             self.cadena.set("")
@@ -361,16 +369,16 @@ class Application(Frame):
         self.image=PIL.Image.open("./images/cifrado.jpg")
         self.photo=PIL.ImageTk.PhotoImage(self.image)
         self.imagen=Label(self, image=self.photo)
-        self.imagen.grid(row=0,column=0,columnspan=2,rowspan=1)
+        self.imagen.grid(row=0,column=0,columnspan=2,rowspan=2)
 
-        texto="\t\tCriptografía"
+        texto="\n\t\tCriptografía"
         #Creación de caja de texto
-        self.out=Text(self,height=21,width=50)
+        self.out=Text(self,height=19,width=52)
         self.out.tag_configure('big', font=('Verdana', 20, 'bold'))
         self.out.tag_configure('low', font=('Verdana', 10))
         self.out.insert(END,texto,'big')
 
-        texto="""\n\nAlumnos:
+        texto="""\n\n Alumnos:
                 \n\tAcosta Vega Sergio
                 \n\tDíaz Gallardo Jesús Brandon
                 \n\tLara Alamilla Donovan Adrián
@@ -379,33 +387,46 @@ class Application(Frame):
         self.out.grid(row=0,column=2,columnspan=4,rowspan=1)
         self.out.config(state="disabled")
 
+        #Creación de texto
+
+        self.texto=Text(self,height=1,width=5,relief="flat",bg="#D9D9D9")
+        self.texto.grid(row=1,column=2)
+        self.texto.insert(END,"Llave",'low')
+        self.texto.config(state="disabled")
+
+        #Creación de entrada de texto
+        self.entrada=Entry(self,width=35,show="*")
+        self.contenido=StringVar()
+        self.entrada["textvariable"] = self.contenido
+        self.entrada.grid(row=1,column=3,columnspan=3)
+
         #Creación de botón ENTER/SIGUIENTE
         self.ABRIR = Button(self)
         self.ABRIR["text"] = "Abrir",
         self.ABRIR["fg"]="green"
         self.ABRIR.bind("<Button-1>",self.abrir)
-        self.ABRIR.grid(row=1,column=2)
-        
+        self.ABRIR.grid(row=2,column=2)
+
         #Creacion de botón Cifrar
         self.CIFRAR = Button(self)
         self.CIFRAR["text"] = "Cifrar",
         self.CIFRAR["fg"]="Black"
         self.CIFRAR.bind("<Button-1>",self.cifrar)
-        self.CIFRAR.grid(row=1,column=3)
+        self.CIFRAR.grid(row=2,column=3)
         
         #Creacion de botón Descifrar
         self.DESCIFRAR = Button(self)
         self.DESCIFRAR["text"] = "Descifrar",
         self.DESCIFRAR["fg"]="Black"
         self.DESCIFRAR.bind("<Button-1>",self.descifrar)
-        self.DESCIFRAR.grid(row=1,column=4)
+        self.DESCIFRAR.grid(row=2,column=4)
 
         #Creación de botón SALIR
         self.QUIT = Button(self)
         self.QUIT["text"] = "Cerrar"
         self.QUIT["fg"]   = "red"
         self.QUIT["command"] =  self.quit
-        self.QUIT.grid(row=1,column=5)
+        self.QUIT.grid(row=2,column=5)
 
 
     def __init__(self, master=None):
