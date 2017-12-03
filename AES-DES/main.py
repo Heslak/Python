@@ -267,6 +267,7 @@ def seleccionador(Cadena,Key,Accion):
     Temp=[]
     Hex=""
     if(Accion=="Descifrar"):
+        Cadena=Cadena[::-1]
         Agregado=int(Cadena[0],16)
         Cadena=Cadena[1:]
         for n in range(int(len(Cadena)/2)):
@@ -293,7 +294,7 @@ def seleccionador(Cadena,Key,Accion):
             Cadena_Ret=Cadena_Ret+pasar_matriz_cadena(descifrar(Msj,Key),"Descifrar")
         Msj=[]
     if(Accion=="Cifrar"):
-        Cadena_Ret=hex(Agregado)[2:]+Cadena_Ret
+        Cadena_Ret=(hex(Agregado)[2:]+Cadena_Ret)[::-1]
     else:
         Cadena_Ret=Cadena_Ret[:-Agregado]
 
