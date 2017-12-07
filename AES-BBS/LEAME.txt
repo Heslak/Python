@@ -1,0 +1,27 @@
+Criptografia
+	Grupo 2
+	Acosta Vega Sergio
+	Diáz Gallardo Jesús Brandon
+	Lara Lamilla Donovan Adrián
+
+
+1 Este programa requiere el uso de Python3
+2 Se necesita tener instaladas las siguientes bibliotecas:
+	
+	PIL
+	numpy
+	copy
+	tkinter
+	textwrap
+	random
+	sys
+
+3 Para que el programa se pueda ejecutar de manera correcta, se necesitan los siguientes achivos en la misma carpeta:
+	blum.py
+	primes.py
+	main.py
+	
+    Al igual que la carpeta y su contenido.
+
+4 Para descargar el producto ingresar a https://codeload.github.com/Heslak/Python/zip/master , descomprimir el archivo que se descargue e ingresar a la carpeta AES-BBS
+
