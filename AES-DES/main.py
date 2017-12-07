@@ -284,6 +284,7 @@ def seleccionador(Cadena,Key,Accion):
     Hex=""
     if(Accion=="Descifrar"):
         Cadena=Cadena[::-1]
+        print(Cadena)
         Agregado=int(Cadena[0],16)
         Cadena=Cadena[1:]
         for n in range(int(len(Cadena)/2)):
@@ -337,11 +338,6 @@ class Application(Frame):
         self.cadena.set(lines)
 
     def cifrar(self,event):
-
-        #Key=[["2b","28","ab","09"],
-        #    ["7e","ae","f7","cf"],
-        #    ["15","d2","15","4f"],
-        #    ["16","a6","88","3c"]]
         bbs = BlumBlumShub(128);
         cadena = str(hex(bbs.next(128)))
         cadena = cadena[2:]
@@ -364,14 +360,14 @@ class Application(Frame):
     def descifrar(self,event):
         
         if(len(self.contenido.get())==32):
-            Key=pasar_cadena_matriz(self.contenido.get())
-            Key=sub_keys(Key)
-            Msj=seleccionador(self.cadena.get(),Key,"Descifrar")
             if(len(self.file.get())==0):
                 showinfo("Descifrado","No ha cargado ningun archivo")
                 self.file.set("")
                 self.cadena.set("")
             else:
+                Key=pasar_cadena_matriz(self.contenido.get())
+                Key=sub_keys(Key)
+                Msj=seleccionador(self.cadena.get(),Key,"Descifrar")
                 archivo = open(self.file.get(),'w')
                 archivo.write(Msj)
                 archivo.close()
