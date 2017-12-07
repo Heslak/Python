@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/python3
 
 import numpy as np
 import math
@@ -8,6 +8,8 @@ from tkinter.filedialog import askopenfilename
 from tkinter.messagebox import *
 import PIL.Image
 import PIL.ImageTk
+from blum import * 
+from primes import *
 
 
 s_box=[ ["63","7c","77","7b","f2","6b","6f","c5","30","01","67","2b","fe","d7","ab","76"],
@@ -260,6 +262,20 @@ def pasar_matriz_cadena(Msj,Accion):
                 temp=temp+chr(int(Msj[reng][col],16))
     return temp
 
+def pasar_cadena_matriz(cadena):
+    Key=[]
+    aux=0
+    for i in range(4):
+        Aux=[]
+        for j in range(4):
+            Aux.append(cadena[aux:aux+2])
+            aux+=2
+
+        Key.append(Aux)
+    return Key
+
+
+
 def seleccionador(Cadena,Key,Accion):
     Agregado=0
     Cadena_Ret=""
@@ -318,15 +334,19 @@ class Application(Frame):
             archivo=""
             self.file.set("")
         #Con esto obtenemos el contenido en la entrada
-        print(self.contenido.get())
         self.cadena.set(lines)
 
     def cifrar(self,event):
 
-        Key=[["2b","28","ab","09"],
-            ["7e","ae","f7","cf"],
-            ["15","d2","15","4f"],
-            ["16","a6","88","3c"]]
+        #Key=[["2b","28","ab","09"],
+        #    ["7e","ae","f7","cf"],
+        #    ["15","d2","15","4f"],
+        #    ["16","a6","88","3c"]]
+        bbs = BlumBlumShub(128);
+        cadena = str(hex(bbs.next(128)))
+        cadena = cadena[2:]
+        print(cadena)
+        Key=pasar_cadena_matriz(cadena)
         Key=sub_keys(Key)
         Crypto=seleccionador(self.cadena.get(),Key,"Cifrar")
         if(len(self.file.get())==0):
@@ -337,29 +357,31 @@ class Application(Frame):
             archivo = open(self.file.get(),'w')
             archivo.write(Crypto)
             archivo.close()
-            showinfo("Cifrado","Su archivo acaba de ser cifrado")
+            showinfo("Cifrado","Su archivo acaba de ser cifrado\n la llave para descifrar es:"+cadena)
             self.file.set("")
             self.cadena.set("")
         
     def descifrar(self,event):
         
-        Key=[["2b","28","ab","09"],
-            ["7e","ae","f7","cf"],
-            ["15","d2","15","4f"],
-            ["16","a6","88","3c"]]
-        Key=sub_keys(Key)
-        Msj=seleccionador(self.cadena.get(),Key,"Descifrar")
-        if(len(self.file.get())==0):
-            showinfo("Descifrado","No ha cargado ningun archivo")
-            self.file.set("")
-            self.cadena.set("")
+        if(len(self.contenido.get())==32):
+            Key=pasar_cadena_matriz(self.contenido.get())
+            Key=sub_keys(Key)
+            Msj=seleccionador(self.cadena.get(),Key,"Descifrar")
+            if(len(self.file.get())==0):
+                showinfo("Descifrado","No ha cargado ningun archivo")
+                self.file.set("")
+                self.cadena.set("")
+            else:
+                archivo = open(self.file.get(),'w')
+                archivo.write(Msj)
+                archivo.close()
+                showinfo("Descifrado","Su archivo acaba de ser descifrado")
+                self.file.set("")
+                self.cadena.set("")
         else:
-            archivo = open(self.file.get(),'w')
-            archivo.write(Msj)
-            archivo.close()
-            showinfo("Descifrado","Su archivo acaba de ser descifrado")
-            self.file.set("")
-            self.cadena.set("")
+                showinfo("Descifrado","La clave no cumple la longitud adecuada")
+                self.file.set("")
+                self.cadena.set("")
 
 
     def createWidgets(self):
